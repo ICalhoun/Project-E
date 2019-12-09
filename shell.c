@@ -6,11 +6,12 @@
 #include <stdio.h>
 
 int main()
-{
+{ 
   char line[83], filename[10], temp[2], file1[10], file2[10];
   int sectorsRead = 0, i, j, count = 0;
   char buffer[13312], doc[83];
-  
+
+  enableInterrupts();
   syscall(0,"SHELL>: ");
   syscall(1, line);
 

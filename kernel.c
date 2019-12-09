@@ -16,13 +16,24 @@ void terminate();
 void writeSector(char*, int);
 void deleteFile(char*);
 void writeFile(char*, char*,int);
+void handleTimerInterrupt(int, int);
 
+int processActive[8], processStackPointer[8];
+int currentProcess = -1;
 
 
 int main()
 {
+  int x;
+  for(x = 0; x<8; x++)
+    {
+      processActive[x] = 0;
+      processStackPointer[x] = 0xff00;
+    }
+  
   makeInterrupt21();
   interrupt(0x21, 4, "shell", 0, 0);
+  makeTimerInterrupt();
   while(1);
 }
 
@@ -197,37 +208,36 @@ void executeProgram(char* name)
   int* sectors;
   int count = 0, memStart = 0x2000;
   int offset = 0x0;
+  int i, segment,dataseg;
   readFile(name, buffer, &sectors);
- 
-  if(sectors = 0)
+
+  dataseg = setKernelDataSegment();
+  for(i =0; i < 8; i++)
     {
-      printString("No such program.");
-    }
-  else
-    {
-      for(count; count < 13312;count++)
+      if(processActive[i] == 0x0)
 	{
-	  putInMemory(memStart, offset, buffer[count]);
-	  offset = offset + 1;
+	  break;
 	}
     }
-  launchProgram(memStart);
+  restoreDataSegment(dataseg);  
+
+  segment = (i+2)*0x1000;
+  putInMemory(segment,offset,buffer);
+  initializeProgram(segment);
+
+  dataseg = setKernelDataSegment();
+  processActive[i] = 1;
+  processStackPointer[i] = 0xff00;
+  restoreDataSegment(dataseg);
 }
 
 
 void terminate()
 {
-  char shellname[6];
-
-  shellname[0] = 's';
-  shellname[1] = 'h';
-  shellname[2] = 'e';
-  shellname[3] = 'l';
-  shellname[4] = 'l';
-  shellname[5] = '\0';
-
-  executeProgram(shellname);
-  
+  int dataseg;
+  dataseg = setKernelDataSegment();
+  processActive[currentProcess] = 0;  
+  restoreDataSegment(dataseg);
   while(1);
 }
 
@@ -315,4 +325,35 @@ void writeFile(char* buffer, char* filename, int numberOfSectors)
     }
   writeSector(map, 1);
   writeSector(dir, 2);
+}
+
+void handleTimerInterrupt(int segment, int sp)
+{
+  //printChar('T');
+  //printChar('i');
+  //printChar('c');
+  int dataseg;
+
+  dataseg = setKernelDataSegment();
+
+  if(currentProcess != -1)
+    {
+      processStackPointer[currentProcess] = sp;
+    }
+
+  while(1)
+    {
+      currentProcess = currentProcess + 1;
+      if(currentProcess > 8)
+	{
+	  currentProcess = 0;
+	}
+      if(processActive[currentProcess] == 1)
+	{
+	  break;
+	} 
+    }
+  segment = (currentProcess+2)*0x1000;
+  restoreDataSegment(dataseg);
+  returnFromTimer(segment, sp);
 }
