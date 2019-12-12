@@ -138,4 +138,8 @@ int main()
 	}
       syscall(8, buffer, line+offset, sectorsRead);
     }
+  else if((line[0] == 'k')&&(line[1] == 'i')&&(line[2] == 'l')&&(line[3] == 'l'))
+    {
+      syscall(9, line+5);
+    } 
 }

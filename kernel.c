@@ -17,9 +17,9 @@ void writeSector(char*, int);
 void deleteFile(char*);
 void writeFile(char*, char*,int);
 void handleTimerInterrupt(int, int);
-void killProcess(int);
+void killProcess(char*);
   
-int processActive[8], processStackPointer[8], processWaitingOn[8];
+int processActive[8], processStackPointer[8];
 int currentProcess = -1;
 
 
@@ -377,11 +377,14 @@ void handleTimerInterrupt(int segment, int sp)
   returnFromTimer(segment, sp);
 }
 
-void killProcess(int process)
+void killProcess(char* process)
 {
   int dataseg;
+  int cProcess = process[0] - '0';
+  
   dataseg = setKernelDataSegment();
-  processActive[process] = 0;
+  processActive[cProcess] = 0;
+  processStackPointer[cProcess] = 0;
   restoreDataSegment(dataseg);
 }
 
