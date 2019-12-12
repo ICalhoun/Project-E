@@ -22,3 +22,13 @@ bcc -ansi -c -o shell_c.o shell.c
 as86 userlib.asm -o userlib_asm.o
 ld86 -o shell -d shell_c.o userlib.o
 ./loadFile shell
+
+bcc -ansi -c -o number.o number.c
+as86 -o userlib.o userlib.asm
+ld86 -d -o number number.o userlib.o
+./loadFile number
+
+bcc -ansi -c -o letter.o letter.c
+as86 -o userlib.o userlib.asm
+ld86 -d -o letter letter.o userlib.o
+./loadFile letter
